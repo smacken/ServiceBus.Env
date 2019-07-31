@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
 
-namespace ServiceBus.Env
+namespace ServiceBus.EnvPlugin
 {
     public class EnvPlugin : ServiceBusPlugin
     {

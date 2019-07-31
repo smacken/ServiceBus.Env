@@ -1,4 +1,4 @@
-namespace ServiceBus.Env
+namespace ServiceBus.EnvPlugin
 {
     public enum Environment
     {
