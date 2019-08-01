@@ -1,9 +1,15 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Internal;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Management;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using ServiceBus.EnvPlugin;
+using Environment = System.Environment;
 
 namespace ServiceBus.Sample.Env
 {
@@ -16,8 +22,26 @@ namespace ServiceBus.Sample.Env
         private const string TopicName = "plugintopic";
         private static ITopicClient topicClient;
 
+        private static Microsoft.Extensions.Hosting.IHostingEnvironment _environment;
+
         private static void Main(string[] args)
         {
+            _environment = new HostingEnvironment
+            {
+                EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+                ApplicationName = AppDomain.CurrentDomain.FriendlyName,
+                ContentRootPath = AppDomain.CurrentDomain.BaseDirectory,
+                ContentRootFileProvider = new PhysicalFileProvider(AppDomain.CurrentDomain.BaseDirectory)
+            };
+
+            var builder = new ConfigurationBuilder()
+                .AddJsonFile($"appsettings.json", true, true)
+                .AddJsonFile($"appsettings.{_environment.EnvironmentName}.json", true, true)
+                .AddEnvironmentVariables();
+
+            var configuration = builder.Build();
+            var myConnString = configuration.GetConnectionString("SQLConn");
+
             MainClientAsync().GetAwaiter().GetResult();
             MainAsync().GetAwaiter().GetResult();
 
@@ -28,12 +52,12 @@ namespace ServiceBus.Sample.Env
         {
             // queue
             queueClient = new QueueClient(ServiceBusConnectionString, QueueName);
-            queueClient.RegisterPlugin(new EnvPlugin.EnvPlugin("Development"));
+            queueClient.RegisterPlugin(new EnvPlugin.EnvPlugin(_environment.EnvironmentName));
             await SendMessagesAsync(10);
 
             // topic
             topicClient = new TopicClient(ServiceBusConnectionString, TopicName);
-            topicClient.RegisterPlugin(new EnvPlugin.EnvPlugin("Development"));
+            topicClient.RegisterPlugin(new EnvPlugin.EnvPlugin(_environment.EnvironmentName));
             await SendTopicMessagesAsync(10);
         }
 
