@@ -25,11 +25,6 @@ namespace ServiceBus.EnvPlugin
 
         public override Task<Message> BeforeMessageSend(Message message)
         {
-            if (message.Body == null || message.Body.Length == 0)
-            {
-                return Task.FromResult(message);
-            }
-
             message.UserProperties[_envName] = this.environment;
             return Task.FromResult(message);
         }

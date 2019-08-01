@@ -16,5 +16,11 @@ namespace ServiceBus.EnvPlugin
             client.RegisterPlugin(plugin);
             return plugin;
         }
+
+        public static TopicClient RegisterEnvPlugin(this TopicClient client, string environment)
+        {
+            client.RegisterEnvPlugin(environment);
+            return client;
+        }
     }
 }
