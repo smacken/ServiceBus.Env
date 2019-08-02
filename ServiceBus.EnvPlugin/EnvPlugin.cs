@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
 
@@ -7,40 +6,30 @@ namespace ServiceBus.EnvPlugin
 {
     public class EnvPlugin : ServiceBusPlugin
     {
-        private readonly string environment;
-        private const string _envName = "Env";
+        private readonly string _environment;
+        private const string EnvName = "Env";
 
         public override string Name => nameof(EnvPlugin);
         public override bool ShouldContinueOnException {get; } = false;
 
         public EnvPlugin(string environment)
         {
-            this.environment = environment;
+            this._environment = environment;
         }
 
         public EnvPlugin(Environment env)
         {
-            this.environment = env.ToString();
+            this._environment = env.ToString();
+        }
+
+        public EnvPlugin(Microsoft.Extensions.Hosting.IHostingEnvironment environment)
+        {
+            this._environment = environment.EnvironmentName;
         }
 
         public override Task<Message> BeforeMessageSend(Message message)
         {
-            message.UserProperties[_envName] = this.environment;
-            return Task.FromResult(message);
-        }
-
-        public override Task<Message> AfterMessageReceive(Message message)
-        {
-            if (message.Body == null || message.Body.Length == 0)
-            {
-                return Task.FromResult(message);
-            }
-
-            if (message.UserProperties.TryGetValue(_envName, out var env))
-            {
-                return Task.FromResult(message);
-            }
-            
+            message.UserProperties[EnvName] = this._environment;
             return Task.FromResult(message);
         }
     }

@@ -18,7 +18,7 @@ namespace ServiceBus.EnvPluginTests
 
             Assert.Null(result.Body);
             Assert.True(message.UserProperties.ContainsKey("Env"), "Header should have env stamped.");
-            Assert.True(message.UserProperties["Env"] == "Development", "Header should have dev env stamped.");
+            Assert.Equal(message.UserProperties["Env"], env);
         }
     }
 }
