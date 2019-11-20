@@ -1,4 +1,4 @@
-name: ASP.NET Core CI
+name: .NET Core CI
 
 on: [push]
 
@@ -9,12 +9,29 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+    - name: Generate build number
+      id: buildnumber
+      uses: einaregilsson/build-number@v1 
       with:
-        dotnet-version: 3.0.100-preview8-013656
+        token: ${{secrets.GITHUB_TOKEN}}
     - name: Build with dotnet
       run: |
         dotnet build ServiceBus.EnvPlugin.sln --configuration Release
         dotnet build Sample/ServiceBus.Sample.Env/ --configuration Release
         dotnet test ServiceBus.EnvPluginTests/
+    - name: Test
+      run: dotnet test ServiceBus.EnvPlugin.sln --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+    #- name: Upload coverage to Codecov  
+    #  uses: codecov/codecov-action@v1.0.2
+    #  with:
+    #    token: ${{secrets.CODECOV_TOKEN}}
+    #    file: ./coverage.opencover.xml
+    #    name: codecov-umbrella
+    - name: Build NuGet package
+      run: dotnet pack ServiceBus.EnvPlugin\ServiceBus.EnvPlugin.csproj -c Release -o .\dist /p:Version=0.1.${{steps.buildnumber.outputs.build_number}}
+    - name: Install NuGet client
+      uses: warrenbuckley/Setup-Nuget@v1
+    - name: Add private GitHub registry to NuGet
+      run: nuget sources add -name "GPR" -Source https://nuget.pkg.github.com/smacken/index.json -Username smacken -Password ${{ secrets.GITHUB_TOKEN }}
+    - name: Push generated package to GitHub registry
+      run: nuget push .\dist\*.nupkg -Source "GPR" -SkipDuplicate
